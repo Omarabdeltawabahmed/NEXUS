@@ -1,0 +1,134 @@
+@model IEnumerable<NEXUS.Models.Project>
+@inject NEXUS.Data.AppDbContext DbContext
+
+@{
+    ViewData["Title"] = "Projects Management";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-sm shadow-sm">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                Projects Management
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">Manage and monitor all ongoing and completed system projects.</p>
+        </div>
+        <a asp-action="Create" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all w-fit">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create New Project</span>
+        </a>
+    </div>
+
+    <!-- Projects Table Card -->
+    <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl overflow-hidden shadow-glass">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[620px]">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider bg-slate-950/40">
+                        <th class="py-4 px-6 font-semibold">Project Name</th>
+                        <th class="py-4 px-6 font-semibold">Description</th>
+                        <th class="py-4 px-6 font-semibold">Department</th>
+                        <th class="py-4 px-6 font-semibold">Status</th>
+                        <th class="py-4 px-6 font-semibold text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-sm">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-12 text-slate-500">
+                                <i class="fa-solid fa-folder-open text-4xl mb-3 block text-slate-600"></i>
+                                No projects found. Click "Create New Project" to add one.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            // فحص المهام المرتبطة بالمشروع بدقة مباشرة من قاعدة البيانات
+                            var projectTasks = DbContext.TaskItems.Where(t => t.ProjectId == item.Id).ToList();
+                            bool hasTasks = projectTasks.Any();
+                            bool allTasksCompleted = hasTasks && projectTasks.All(t => t.Status == NEXUS.Enums.TaskStatus.Completed);
+
+                            var currentStatus = allTasksCompleted ? NEXUS.Enums.ProjectStatus.Completed : NEXUS.Enums.ProjectStatus.Active;
+
+                            string statusBg = "bg-slate-800/80 text-slate-400 border-slate-700/60";
+
+                            switch (currentStatus)
+                            {
+                                case NEXUS.Enums.ProjectStatus.Active:
+                                    statusBg = "bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-sm shadow-cyan-500/20";
+                                    break;
+                                case NEXUS.Enums.ProjectStatus.Pending:
+                                    statusBg = "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-sm shadow-amber-500/20";
+                                    break;
+                                case NEXUS.Enums.ProjectStatus.Completed:
+                                    statusBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/20";
+                                    break;
+                                case NEXUS.Enums.ProjectStatus.OnHold:
+                                    statusBg = "bg-purple-500/10 text-purple-400 border-purple-500/30 shadow-sm shadow-purple-500/20";
+                                    break;
+                            }
+
+                            <tr class="hover:bg-slate-800/40 transition-all duration-200 group">
+                                <!-- Project Name -->
+                                <td class="py-4 px-6 font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xs flex-shrink-0">
+                                            <i class="fa-solid fa-code"></i>
+                                        </div>
+                                        <span class="truncate">@Html.DisplayFor(modelItem => item.Name)</span>
+                                    </div>
+                                </td>
+
+                                <!-- Description -->
+                                <td class="py-4 px-6 text-slate-300">
+                                    @(string.IsNullOrEmpty(item.Description) ? "No description" : item.Description)
+                                </td>
+
+                                <!-- Department -->
+                                <td class="py-4 px-6">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-slate-800/80 text-cyan-400 border border-slate-700/60">
+                                        <i class="fa-solid fa-building text-[10px]"></i>
+                                        @(item.Department?.Name ?? "Unassigned")
+                                    </span>
+                                </td>
+
+                                <!-- Status Badge -->
+                                <td class="py-4 px-6">
+                                    <span class="px-3 py-1 rounded-lg text-xs font-medium border @statusBg inline-flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                                        @currentStatus
+                                    </span>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="py-4 px-6 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700/60 hover:border-emerald-500/30 flex items-center justify-center transition-all" title="Details">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </a>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-700/60 hover:border-amber-500/30 flex items-center justify-center transition-all" title="Edit">
+                                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/60 hover:border-red-500/30 flex items-center justify-center transition-all" title="Delete">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

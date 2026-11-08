@@ -1,0 +1,384 @@
+@using Microsoft.EntityFrameworkCore
+@inject NEXUS.Data.AppDbContext DbContext
+@inject Microsoft.AspNetCore.Identity.SignInManager<NEXUS.Models.ApplicationUser> SignInManager
+@inject Microsoft.AspNetCore.Identity.UserManager<NEXUS.Models.ApplicationUser> UserManager
+
+@{
+    var currentUserId = UserManager.GetUserId(User);
+    List<NEXUS.Models.TaskItem> userNotifications = new();
+    if (SignInManager.IsSignedIn(User) && !string.IsNullOrEmpty(currentUserId))
+    {
+        userNotifications = await DbContext.TaskItems
+            .Include(t => t.Project)
+            .Where(t => t.AssignedToUserId == currentUserId && t.Status != NEXUS.Enums.TaskStatus.Completed && t.Status != NEXUS.Enums.TaskStatus.Cancelled)
+            .OrderByDescending(t => t.Id)
+            .Take(10)
+            .ToListAsync();
+    }
+    var activeTasksCount = userNotifications.Count;
+}
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - NEXUS Core</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+            tailwind.config = {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            nexus: {
+                                bg: '#090d16',
+                                card: '#121929',
+                                cardHover: '#1a233a',
+                                border: '#1e293b',
+                                cyan: '#06b6d4',
+                                emerald: '#10b981',
+                                violet: '#8b5cf6',
+                                accent: '#3b82f6'
+                            }
+                        },
+                        boxShadow: {
+                            'neon-cyan': '0 0 20px rgba(6, 182, 212, 0.3)',
+                            'neon-emerald': '0 0 20px rgba(16, 185, 129, 0.3)',
+                            'neon-violet': '0 0 20px rgba(139, 92, 246, 0.3)',
+                            'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+                        }
+                    }
+                }
+            }
+    </script>
+    <!-- Google Fonts Inter & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @* <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"> *@
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" href="~/css/nexus-theme.css" />
+</head>
+<body class="bg-nexus-bg text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <div class="flex h-screen overflow-hidden relative z-10 w-full">
+
+        <!-- Mobile Backdrop Overlay -->
+        <div id="mobileSidebarBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
+
+        <!-- Sidebar -->
+        <aside id="nexusSidebar" class="fixed inset-y-0 left-0 z-50 w-64 glass-panel bg-slate-900/95 md:bg-slate-900/60 border-r border-slate-800/80 flex flex-col transition-transform duration-300 ease-in-out -translate-x-full md:static md:translate-x-0 shadow-2xl md:shadow-none">
+            <!-- Brand Logo -->
+            <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800/60">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-violet-600 flex items-center justify-center shadow-neon-cyan text-white font-black text-xl tracking-wider">
+                        N
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold tracking-widest bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">NEXUS</span>
+                        <span class="block text-[10px] text-cyan-400 tracking-widest uppercase font-semibold">Neural Core v1.0</span>
+                    </div>
+                </div>
+
+                <!-- Mobile Close Button -->
+                <button type="button" id="mobileSidebarClose" aria-label="Close navigation menu" class="md:hidden w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="flex-1 py-6 px-4 space-y-6 overflow-y-auto">
+                <div>
+                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Main</p>
+                    <nav class="space-y-1">
+                        <!-- Dashboard Link مع انتقال ناعم ومطابق لباقي اللينكات مع الحفاظ على لونه المميز -->
+                        <a asp-controller="Home" asp-action="Index" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 bg-gradient-to-r from-cyan-500/20 to-violet-500/10 text-cyan-400 border border-cyan-500/30 shadow-neon-cyan hover:translate-x-1.5 hover:border-cyan-400 hover:shadow-lg group">
+                            <i class="fa-solid fa-chart-pie w-5 text-center group-hover:scale-110 transition-transform"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </nav>
+                </div>
+
+                <div>
+                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Management</p>
+                    <nav class="space-y-1">
+                        <!-- Departments Link -->
+                        <a asp-controller="Departments" asp-action="Index" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                            <i class="fa-solid fa-building w-5 text-center group-hover:text-cyan-400 transition-colors"></i>
+                            <span>Departments</span>
+                            <span class="ml-auto bg-slate-800/80 group-hover:bg-cyan-500/20 text-slate-400 group-hover:text-cyan-300 text-xs px-2 py-0.5 rounded-lg border border-slate-700/60 group-hover:border-cyan-500/30 transition-all">@(await DbContext.Departments.CountAsync())</span>
+                        </a>
+
+                        <!-- Projects Link -->
+                        <a asp-controller="Projects" asp-action="Index" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                            <i class="fa-solid fa-layer-group w-5 text-center group-hover:text-emerald-400 transition-colors"></i>
+                            <span>Projects</span>
+                            <span class="ml-auto bg-slate-800/80 group-hover:bg-emerald-500/20 text-slate-400 group-hover:text-emerald-300 text-xs px-2 py-0.5 rounded-lg border border-slate-700/60 group-hover:border-emerald-500/30 transition-all">@(await DbContext.Projects.CountAsync())</span>
+                        </a>
+
+                        <!-- Tasks Link -->
+                        <a asp-controller="Tasks" asp-action="Index" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                            <i class="fa-solid fa-square-check w-5 text-center group-hover:text-violet-400 transition-colors"></i>
+                            <span>Tasks</span>
+                            <span class="ml-auto bg-slate-800/80 group-hover:bg-violet-500/20 text-slate-400 group-hover:text-violet-300 text-xs px-2 py-0.5 rounded-lg border border-slate-700/60 group-hover:border-violet-500/30 transition-all">@(await DbContext.TaskItems.CountAsync())</span>
+                        </a>
+
+                        <div class="my-3 border-t-2 border-sky-500/30"></div>
+
+                        <!-- Show Submit Link -->
+                        @if (User.IsInRole("Admin"))
+                            {
+                            <a asp-controller="Tasks" asp-action="SubmittedTasks" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-fuchsia-400 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                                <i class="fa-solid fa-file-shield w-5 text-center group-hover:text-fuchsia-400 transition-colors"></i>
+                                <span>Show All Submits</span>
+                                <span class="ml-auto bg-slate-800/80 group-hover:bg-fuchsia-500/20 text-slate-400 group-hover:text-fuchsia-300 text-xs px-2 py-0.5 rounded-lg border border-slate-700/60 group-hover:border-fuchsia-500/30 transition-all">@(await DbContext.TaskItems.Where(t => t.Status == NEXUS.Enums.TaskStatus.Completed).CountAsync())</span>
+                            </a>
+                            }
+
+                        <!-- Teams Link (Amber Theme) -->
+                        <a asp-controller="Teams" asp-action="Index" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                            <i class="fa-solid fa-users w-5 text-center group-hover:text-amber-400 transition-colors"></i>
+                            <span>Teams</span>
+                            <span class="ml-auto bg-slate-800/80 group-hover:bg-amber-500/20 text-slate-400 group-hover:text-amber-300 text-xs px-2 py-0.5 rounded-lg border border-slate-700/60 group-hover:border-amber-500/30 transition-all">@(await DbContext.Teams.CountAsync())</span>
+                        </a>
+
+                        <div class="my-3 border-t-2 border-sky-500/30"></div>
+
+                        <!-- Reports Link (Rose Theme) -->
+                       @if(User.IsInRole("Admin"))
+                            {
+                            <a asp-controller="Reports" asp-action="Index" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                                <i class="fa-solid fa-chart-pie w-5 text-center group-hover:text-rose-400 transition-colors"></i>
+                                <span>Reports</span>
+                            </a>
+                            }
+
+                        <!-- User Profile Link (Blue Theme) -->
+                        <a asp-controller="Account" asp-action="Profile" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30 hover:translate-x-1.5 border border-transparent transition-all duration-200 group">
+                            <i class="fa-solid fa-user-gear w-5 text-center group-hover:text-blue-400 transition-colors"></i>
+                            <span>User Profile</span>
+                        </a>
+
+                    </nav>
+                </div>
+            </div>
+
+            <!-- User Profile / Auth Footer -->
+            <div class="p-4 border-t border-slate-800/60 bg-slate-900/40">
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    var currentUser = await UserManager.GetUserAsync(User);
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-500 flex items-center justify-center text-white font-bold text-sm shadow-neon-violet">
+                            @(currentUser?.FullName?.Substring(0, 1).ToUpper() ?? "U")
+                        </div>
+                        <div class="overflow-hidden flex-1">
+                            <h4 class="text-sm font-semibold text-white truncate">@(currentUser?.FullName ?? User.Identity?.Name)</h4>
+                            <p class="text-xs text-cyan-400 truncate">Authorized User</p>
+                        </div>
+                    </div>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="w-full py-2 rounded-xl text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="flex items-center gap-2">
+                        <a asp-controller="Account" asp-action="Login" class="flex-1 py-2 text-center rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors border border-slate-700">
+                            Login
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="flex-1 py-2 text-center rounded-xl text-xs font-semibold bg-gradient-to-r from-cyan-500 to-violet-500 text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 transition-opacity">
+                            Register
+                        </a>
+                    </div>
+                }
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+            <!-- Top Navbar -->
+            <header class="h-20 glass-panel border-b border-slate-800/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between z-20">
+                <div class="flex items-center gap-3 sm:gap-4 flex-1 max-w-xl">
+                    <!-- Mobile Hamburger Button -->
+                    <button type="button" 
+                            id="mobileSidebarToggle" 
+                            aria-label="Toggle navigation menu" 
+                            class="md:hidden w-10 h-10 rounded-xl bg-slate-900/60 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-cyan-400 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-colors flex-shrink-0 focus:outline-none">
+                        <i class="fa-solid fa-bars text-sm"></i>
+                    </button>
+
+                    <div class="relative w-full" id="nexusSearchWrapper">
+                        <!-- أيقونة البحث جهة اليسار -->
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400" id="nexusSearchIcon">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+
+                        <!-- مؤشر التحميل Spinner (مخفي افتراضياً) -->
+                        <span class="hidden absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-cyan-400 animate-spin" id="nexusSearchSpinner">
+                            <i class="fa-solid fa-circle-notch text-xs"></i>
+                        </span>
+
+                        <!-- حقل الإدخال مع pr-16 لمنع تداخل النص مع زر Ctrl+K -->
+                        <input type="text" 
+                               id="nexusGlobalSearch"
+                               autocomplete="off"
+                               spellcheck="false"
+                               placeholder="Search tasks, projects, departments..."
+                               class="w-full bg-slate-900/60 border border-slate-700/60 rounded-xl pl-11 pr-12 sm:pr-16 py-2.5 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 transition-all duration-300 ease-in-out">
+
+                        <!-- زر مسح النص وشارة Ctrl+K جهة اليمين -->
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-2.5">
+                            <button type="button" id="nexusSearchClearBtn" class="hidden text-slate-400 hover:text-white mr-2 text-xs p-1 focus:outline-none" title="Clear">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <span class="hidden sm:inline-block text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded-lg border border-slate-700 shadow-sm pointer-events-none" id="nexusSearchKbdShortcut">Ctrl+K</span>
+                        </span>
+
+                        <!-- قائمة نتائج البحث المنبثقة Dropdown -->
+                        <div id="nexusSearchResults" 
+                             class="hidden absolute top-full left-0 right-0 mt-2 glass-panel bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden max-h-[460px] overflow-y-auto divide-y divide-slate-800/80">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Notifications Dropdown -->
+                    <div class="relative" id="notificationsDropdownWrapper">
+                        <button type="button" 
+                                id="notificationsBellBtn" 
+                                data-user-id="@currentUserId"
+                                aria-expanded="false" 
+                                aria-label="Notifications"
+                                class="relative w-10 h-10 rounded-xl bg-slate-900/60 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-cyan-400 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all duration-200 cursor-pointer focus:outline-none">
+                            <i class="fa-regular fa-bell text-sm"></i>
+                            <span id="notificationsBadge" class="@(activeTasksCount > 0 ? "" : "hidden") absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-rose-500/30 border border-slate-900 animate-pulse">
+                                @(activeTasksCount > 99 ? "99+" : activeTasksCount)
+                            </span>
+                        </button>
+
+                        <!-- Notifications Dropdown Menu -->
+                        <div id="notificationsDropdown" 
+                             class="hidden absolute right-0 mt-3 w-80 sm:w-96 glass-panel bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-xl z-50 overflow-hidden transition-all duration-200 ease-out origin-top-right">
+                            
+                            <!-- Header -->
+                            <div class="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xs shadow-neon-cyan">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-white leading-tight">Notifications</h3>
+                                        <p class="text-[11px] text-slate-400">Assigned Tasks Required</p>
+                                    </div>
+                                </div>
+                                @if (activeTasksCount > 0)
+                                {
+                                    <span id="notificationsPendingHeaderBadge" class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                        @activeTasksCount Required
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Task List -->
+                            <div id="notificationsList" class="max-h-80 overflow-y-auto divide-y divide-slate-800/60">
+                                @if (userNotifications.Any())
+                                {
+                                    @foreach (var task in userNotifications)
+                                    {
+                                        string priorityBadge = task.Priority.ToString() switch
+                                        {
+                                            "Urgent" => "bg-rose-500/10 text-rose-400 border-rose-500/30",
+                                            "High" => "bg-red-500/10 text-red-400 border-red-500/20",
+                                            "Medium" => "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                                            _ => "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                        };
+
+                                        string statusClass = task.Status == NEXUS.Enums.TaskStatus.Pending
+                                            ? "bg-rose-500/20 text-rose-300 border-rose-500/30 font-bold"
+                                            : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 font-medium";
+
+                                        <a href="@Url.Action("StartTask", "Tasks", new { id = task.Id })" 
+                                           data-task-id="@task.Id"
+                                           class="notification-task-link block p-3.5 hover:bg-slate-800/50 transition-colors group">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <h4 class="text-sm font-semibold text-slate-200 group-hover:text-cyan-400 transition-colors line-clamp-1">
+                                                    @task.Title
+                                                </h4>
+                                                <span class="task-status-badge px-1.5 py-0.5 rounded text-[9px] border @statusClass flex-shrink-0">
+                                                    @task.Status
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                                @if (task.Project != null)
+                                                {
+                                                    <span class="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                                                        <i class="fa-solid fa-layer-group text-[8px]"></i>
+                                                        @task.Project.Name
+                                                    </span>
+                                                }
+                                                <span class="text-[10px] px-2 py-0.5 rounded border @priorityBadge font-medium">
+                                                    @task.Priority
+                                                </span>
+                                                <span class="text-[10px] text-slate-400 ml-auto flex items-center gap-1">
+                                                    <i class="fa-regular fa-clock text-[9px]"></i>
+                                                    @task.DueDate.ToString("MMM dd")
+                                                </span>
+                                            </div>
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="py-10 px-4 text-center">
+                                        <div class="w-12 h-12 mx-auto rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-cyan-400 mb-3 shadow-inner">
+                                            <i class="fa-solid fa-check text-lg"></i>
+                                        </div>
+                                        <p class="text-sm font-semibold text-slate-200">No Active Tasks</p>
+                                        <p class="text-xs text-slate-400 mt-1">You are all caught up! No tasks currently require your action.</p>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="p-2.5 bg-slate-950/60 border-t border-slate-800/80 text-center">
+                                <a href="@Url.Action("Index", "Tasks")" class="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors inline-flex items-center gap-1.5">
+                                    <span>View All Tasks</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hidden sm:flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 px-3 py-2 rounded-xl text-sm">
+                        <span class="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs border border-cyan-500/30">@(await DbContext.TaskItems.CountAsync())</span>
+                        <span class="text-slate-300 text-xs font-medium">Active Tasks</span>
+                    </div>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Tasks" asp-action="Create" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/20 transition-all">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Quick Task</span>
+                        </a>
+                    }
+                </div>
+            </header>
+
+            <!-- Render Body Content with Smooth Transition Container -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative" id="mainContentScroll">
+                <div id="pageContentWrapper" class="page-transition-content">
+                    @RenderBody()
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- NEXUS Core Interactive Scripts -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

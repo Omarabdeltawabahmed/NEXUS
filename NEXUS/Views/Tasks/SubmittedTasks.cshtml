@@ -1,0 +1,183 @@
+@model IEnumerable<NEXUS.Models.TaskItem>
+
+@{
+    ViewData["Title"] = "Submitted Tasks";
+}
+
+<div class="space-y-6">
+    <!-- Header Section (تم تغيير اللون إلى Fuchsia ليطابق الزرار) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900/40 p-5 sm:p-6 rounded-2xl border border-slate-800/80 shadow-glass backdrop-blur-md">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center text-fuchsia-400 shadow-neon-fuchsia flex-shrink-0">
+                <i class="fa-solid fa-file-shield text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-extrabold text-white tracking-tight">Submitted Tasks</h1>
+                <p class="text-xs text-slate-400 mt-0.5">Manage and monitor all submitted and completed system tasks.</p>
+            </div>
+        </div>
+        <div class="bg-fuchsia-500/10 border border-fuchsia-500/20 px-5 py-2.5 rounded-xl text-fuchsia-400 text-xs font-bold w-fit">
+            Total Submissions: @Model.Count()
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="glass-panel rounded-2xl border border-slate-800/80 shadow-glass overflow-hidden bg-slate-950/20">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                    <tr class="border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-950/60">
+                        <th class="py-4 px-6">Task Title</th>
+                        <th class="py-4 px-6">Project</th>
+                        <th class="py-4 px-6">Assigned To</th>
+                        <th class="py-4 px-6">Due Date</th>
+                        <th class="py-4 px-6">Priority</th>
+                        <th class="py-4 px-6">Status</th>
+                        <th class="py-4 px-6 text-center">Management</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-xs text-slate-300">
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var task in Model)
+                        {
+                            var assignedUserName = task.AssignedToUser != null ? (task.AssignedToUser.FullName ?? task.AssignedToUser.UserName) : "N/A";
+                            <tr class="hover:bg-slate-900/40 transition-colors">
+                                <td class="py-4 px-6 font-semibold text-white flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-square-check text-xs"></i>
+                                    </div>
+                                    <span>@task.Title</span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        @(task.Project != null ? task.Project.Name : "General")
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 font-medium text-white">
+                                    @assignedUserName
+                                </td>
+                                <td class="py-4 px-6 text-slate-400">@task.DueDate.ToString("yyyy-MM-dd")</td>
+                                <td class="py-4 px-6">
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold
+                                        @(task.Priority == NEXUS.Enums.TaskPriority.Urgent ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                                          task.Priority == NEXUS.Enums.TaskPriority.High ? "bg-orange-500/10 text-orange-400 border border-orange-500/20" :
+                                          "bg-amber-500/10 text-amber-400 border border-amber-500/20")">
+                                        @task.Priority
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        @task.Status
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button type="button"
+                                                data-title="@task.Title"
+                                                data-user="@assignedUserName"
+                                                data-content="@task.SubmissionContent"
+                                                onclick="openSubmissionModalFromBtn(this)"
+                                                class="px-3.5 py-1.5 rounded-xl text-[11px] font-semibold bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 hover:bg-fuchsia-500/20 transition-all flex items-center gap-1.5 shadow-sm">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                            <span>Show Submit</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-500 italic">No submitted tasks found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Submission Details Modal -->
+<div id="submissionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="glass-panel w-full max-w-lg rounded-2xl p-6 border border-slate-800 shadow-2xl space-y-6 relative bg-[#0b101d]">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+            <h3 class="text-white font-bold text-base flex items-center gap-2">
+                <i class="fa-solid fa-file-shield text-fuchsia-400"></i> Task Submission Details
+            </h3>
+            <button onclick="closeSubmissionModal()" class="text-slate-400 hover:text-white p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="space-y-4 text-xs">
+            <div>
+                <span class="text-slate-400 uppercase tracking-wider text-[10px]">Task Title:</span>
+                <p id="modalTaskTitle" class="text-white font-semibold text-sm mt-1"></p>
+            </div>
+
+            <div>
+                <span class="text-slate-400 uppercase tracking-wider text-[10px]">Submitted By:</span>
+                <p id="modalTaskUser" class="text-fuchsia-400 font-semibold text-sm mt-1"></p>
+            </div>
+
+            <div>
+                <span class="text-slate-400 uppercase tracking-wider text-[10px]">Submission Content / File:</span>
+                <div id="modalContentContainer" class="mt-2 bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-slate-200 text-xs">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-4 border-t border-slate-800">
+            <button onclick="closeSubmissionModal()" class="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openSubmissionModalFromBtn(button) {
+            const title = button.getAttribute('data-title');
+            const user = button.getAttribute('data-user');
+            const content = button.getAttribute('data-content');
+
+            document.getElementById('modalTaskTitle').textContent = title;
+            document.getElementById('modalTaskUser').textContent = user;
+
+            const container = document.getElementById('modalContentContainer');
+
+            if (!content || content.trim() === "" || content === "null") {
+                container.innerHTML = '<span class="text-slate-500 italic">No content or file was submitted for this task.</span>';
+            } else if (content.startsWith('/uploads/')) {
+                const fileName = content.split('/').pop();
+                container.innerHTML = `
+                            <div class="flex items-center justify-between gap-4 bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-10 h-10 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-file-arrow-down text-base"></i>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <p class="text-white font-semibold truncate">${fileName}</p>
+                                        <p class="text-[10px] text-slate-400">Uploaded File Attachment</p>
+                                    </div>
+                                </div>
+                                <a href="${content}" target="_blank" class="px-4 py-2 bg-fuchsia-500 text-slate-950 rounded-xl hover:bg-fuchsia-400 transition-all font-semibold text-xs shrink-0 flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-download text-xs"></i> Download
+                                </a>
+                            </div>
+                        `;
+            } else {
+                container.innerHTML = `<div class="p-3 bg-slate-900 rounded-xl font-mono whitespace-pre-wrap">${content}</div>`;
+            }
+
+            document.getElementById('submissionModal').classList.remove('hidden');
+        }
+
+        function closeSubmissionModal() {
+            document.getElementById('submissionModal').classList.add('hidden');
+        }
+    </script>
+}

@@ -1,0 +1,72 @@
+﻿@model NEXUS.Models.Project
+
+@{
+    ViewData["Title"] = "Manage Project Team";
+    var allUsers = ViewBag.AllUsers as List<NEXUS.Models.ApplicationUser> ?? new List<NEXUS.Models.ApplicationUser>();
+    var assignedUserIds = ViewBag.AssignedUserIds as List<string> ?? new List<string>();
+}
+
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Page Header -->
+    <div class="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 backdrop-blur-xl shadow-glass flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-neon-cyan">
+                <i class="fa-solid fa-users-gear text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Manage Project Team</h1>
+                <p class="text-xs text-slate-400 mt-0.5">Assign or remove members for project: <span class="text-cyan-400 font-semibold">@Model.Name</span></p>
+            </div>
+        </div>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-4 py-2 rounded-xl text-sm border border-slate-700/60 transition-all flex items-center gap-2 w-fit">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to Details</span>
+        </a>
+    </div>
+
+    <!-- Users Selection Form -->
+    <div class="bg-slate-900/60 p-8 rounded-2xl border border-slate-800/80 backdrop-blur-xl shadow-glass">
+        <form asp-action="ManageUsers" asp-route-id="@Model.Id" method="post" class="space-y-6">
+            @Html.AntiForgeryToken()
+
+            <div class="space-y-3">
+                <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider block">Select Project Members</label>
+                <p class="text-xs text-slate-400">Check the users you want to include in this project team. Unchecking will remove them from the project.</p>
+
+                @if (allUsers.Any())
+                {
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        @foreach (var user in allUsers)
+                        {
+                            var isAssigned = assignedUserIds.Contains(user.Id);
+                            <label class="relative flex items-center p-4 rounded-xl bg-slate-950/60 border border-slate-800/60 hover:border-cyan-500/40 cursor-pointer transition-all">
+                                <input type="checkbox" name="selectedUserIds" value="@user.Id" @(isAssigned ? "checked" : "") class="w-4 h-4 text-cyan-500 bg-slate-900 border-slate-700 rounded focus:ring-cyan-500/30 focus:ring-2 cursor-pointer" />
+                                <div class="ml-3 text-sm">
+                                    <span class="font-medium text-white block">@(user.FullName ?? "Unnamed User")</span>
+                                    <span class="text-xs text-slate-400">@user.Email</span>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="bg-slate-950/30 p-6 rounded-xl border border-slate-800/40 text-center text-slate-400 text-sm">
+                        No users found in the system.
+                    </div>
+                }
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Cancel</a>
+                <button type="submit" class="bg-gradient-to-r from-cyan-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm shadow-neon-cyan transition-all">Save Team Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

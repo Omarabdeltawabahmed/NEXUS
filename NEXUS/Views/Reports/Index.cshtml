@@ -1,0 +1,328 @@
+@model NEXUS.ViewModels.ReportsViewModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "System Reports & Analytics";
+    var inv = CultureInfo.InvariantCulture;
+    string taskRateStr = Model.TaskCompletionRate.ToString("0.0", inv);
+    string projectRateStr = Model.ProjectCompletionRate.ToString("0.0", inv);
+}
+
+<div class="space-y-6 max-w-7xl mx-auto pb-12">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(244,63,94,0.2)] flex-shrink-0">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <span>Performance Analytics & Reports</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Real-time metrics, dynamic project execution velocity, and workforce distribution overview.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2 bg-slate-900/80 border border-slate-800 p-1.5 rounded-xl backdrop-blur-xl">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-1.5"></span>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                    @Model.WorkspaceName
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Grid: Main Chart & Side Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left Big Chart Card -->
+        <div class="lg:col-span-2 bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-5 sm:p-6 shadow-glass space-y-6 flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Execution Velocity</span>
+                    <h2 class="text-lg sm:text-xl font-bold text-white mt-0.5">Task & Project Output Curve</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        @taskRateStr% Completed Overall
+                    </span>
+                </div>
+            </div>
+
+            <!-- Dynamic Glowing Wave Chart Area Calculated from AppDbContext -->
+            <div class="relative h-48 w-full flex items-end justify-between px-2 pt-6 pb-2 border-b border-slate-800/80 overflow-hidden">
+                <!-- Background Grid Lines -->
+                <div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+                    <div class="border-b border-slate-700 w-full"></div>
+                    <div class="border-b border-slate-700 w-full"></div>
+                    <div class="border-b border-slate-700 w-full"></div>
+                </div>
+
+                <svg class="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 500 150">
+                    <defs>
+                        <linearGradient id="nexusGlowGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.38"></stop>
+                            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.0"></stop>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Real Dynamic Area Fill -->
+                    <path d="@Model.SvgAreaPath" fill="url(#nexusGlowGradient)"></path>
+
+                    <!-- Real Dynamic Line Curve -->
+                    <path d="@Model.SvgCurvePath" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"></path>
+
+                    <!-- Dynamic Data Points along the curve -->
+                    @if (Model.VelocityPoints != null)
+                    {
+                        @foreach (var pt in Model.VelocityPoints)
+                        {
+                            <circle cx="@pt.X.ToString("0.0", inv)" cy="@pt.Y.ToString("0.0", inv)" r="3.5" fill="#06b6d4" stroke="#0b101d" stroke-width="2" />
+                        }
+                    }
+                </svg>
+
+                <!-- Live Rate Floating Badge -->
+                <div class="absolute top-8 left-1/3 sm:left-1/2 -translate-x-1/2 bg-slate-950/90 border border-cyan-500/40 px-3 py-1.5 rounded-xl shadow-neon-cyan flex items-center gap-2 z-10 backdrop-blur-md">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span class="text-xs text-white font-semibold">Live Efficiency: @taskRateStr%</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Timeline Month Labels -->
+            <div class="flex justify-between text-[11px] text-slate-500 uppercase tracking-wider font-medium px-1">
+                @if (Model.VelocityPoints != null && Model.VelocityPoints.Any())
+                {
+                    @foreach (var pt in Model.VelocityPoints)
+                    {
+                        <span>@pt.Label</span>
+                    }
+                }
+                else
+                {
+                    <span>System Start</span>
+                    <span>Monitoring</span>
+                    <span>Current Live</span>
+                }
+            </div>
+        </div>
+
+        <!-- Right Column: Two Cards (Completion Rate & Module Metrics) -->
+        <div class="space-y-6 flex flex-col justify-between">
+            <!-- Card 1: Completion Rate Gauge (متفاعل تماماً مع الداتابيز الحقيقية) -->
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-5 sm:p-6 shadow-glass space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Task Efficiency</span>
+                    <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-3xl font-extrabold text-white">@taskRateStr%</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">@Model.CompletedTasks of @Model.TotalTasks Tasks Done</p>
+                    </div>
+
+                    <!-- حلقة الدائرة الديناميكية مع معالجة InvariantCulture لمنع أخطاء الـ SVG -->
+                    <div class="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <!-- الخلفية الداكنة للدائرة -->
+                            <path class="text-slate-800"
+                                  stroke-width="3.5"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                            <!-- الجزء الملون الديناميكي -->
+                            <path class="text-emerald-400 transition-all duration-1000 ease-out"
+                                  stroke-dasharray="@taskRateStr, 100"
+                                  stroke-width="3.5"
+                                  stroke-linecap="round"
+                                  stroke="currentColor"
+                                  fill="none"
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute text-[11px] font-bold text-white">
+                            @taskRateStr%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Quick Counts Metrics -->
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-5 sm:p-6 shadow-glass space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">System Inventory</span>
+                    <i class="fa-solid fa-database text-violet-400"></i>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase">Projects</span>
+                        <h4 class="text-lg font-bold text-emerald-400">@Model.TotalProjects</h4>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase">Teams</span>
+                        <h4 class="text-lg font-bold text-amber-400">@Model.TotalTeams</h4>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase">In Progress</span>
+                        <h4 class="text-lg font-bold text-cyan-400">@Model.InProgressTasks</h4>
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 uppercase">Urgent Tasks</span>
+                        <h4 class="text-lg font-bold text-rose-400">@Model.UrgentTasksCount</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real Project Performance Breakdown Table -->
+    <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-5 sm:p-6 shadow-glass space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-emerald-400"></i>
+                    <span>Real-time Projects Execution Performance</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Live database progress rate, assigned squads, and task completion per project.</p>
+            </div>
+            <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit">
+                @Model.ProjectReports.Count Active Projects Tracked
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 min-w-[620px]">
+                <thead class="bg-slate-950/60 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Project Name</th>
+                        <th class="py-3 px-4 font-semibold">Department</th>
+                        <th class="py-3 px-4 font-semibold">Squad / Team</th>
+                        <th class="py-3 px-4 font-semibold">Tasks Progress</th>
+                        <th class="py-3 px-4 font-semibold text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                    @if (Model.ProjectReports != null && Model.ProjectReports.Any())
+                    {
+                        @foreach (var proj in Model.ProjectReports)
+                        {
+                            string pRateStr = proj.ProgressRate.ToString("0.0", inv);
+                            <tr class="hover:bg-slate-800/30 transition-all">
+                                <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xs flex-shrink-0">
+                                        <i class="fa-solid fa-code"></i>
+                                    </div>
+                                    <span class="truncate">@proj.ProjectName</span>
+                                </td>
+                                <td class="py-3.5 px-4 text-cyan-400">
+                                    <span class="inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-building text-[10px]"></i>
+                                        @proj.DepartmentName
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 text-amber-400">
+                                    <span class="inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-users text-[10px]"></i>
+                                        @proj.TeamName
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="font-medium text-slate-300">@proj.CompletedTasks / @proj.TotalTasks Done</span>
+                                            <span class="font-bold text-emerald-400">@pRateStr%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                            <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-1.5 rounded-full transition-all duration-500" style="width: @pRateStr%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4 text-right">
+                                    <span class="px-2.5 py-1 rounded-lg bg-slate-800/80 text-cyan-300 border border-slate-700/60 font-semibold text-[11px]">
+                                        @proj.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-slate-500 italic">
+                                No projects currently registered in the database.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bottom Table Card: System Overview -->
+    <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-5 sm:p-6 shadow-glass space-y-6">
+        <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-server text-cyan-400"></i>
+                <span>Modules & Teams Summary Overview</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Database live records and workforce distribution metrics.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 min-w-[550px]">
+                <thead class="bg-slate-950/60 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Module Name</th>
+                        <th class="py-3 px-4 font-semibold">Category</th>
+                        <th class="py-3 px-4 font-semibold">Total Records</th>
+                        <th class="py-3 px-4 font-semibold">Key Metric / Distribution</th>
+                        <th class="py-3 px-4 font-semibold text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                    <tr class="hover:bg-slate-800/30 transition-all">
+                        <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs flex-shrink-0"><i class="fa-solid fa-building"></i></div>
+                            Departments
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-400">Organization</td>
+                        <td class="py-3.5 px-4 font-semibold text-white">@Model.TotalDepartments Depts</td>
+                        <td class="py-3.5 px-4 text-cyan-300 font-semibold">@Model.ProjectsWithDepartments Projects Linked to Depts</td>
+                        <td class="py-3.5 px-4 text-right"><span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">Live</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30 transition-all">
+                        <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs flex-shrink-0"><i class="fa-solid fa-folder"></i></div>
+                            Projects Module
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-400">Core Assets</td>
+                        <td class="py-3.5 px-4 font-semibold text-white">@Model.TotalProjects Projects</td>
+                        <td class="py-3.5 px-4 text-emerald-400 font-semibold">@projectRateStr% Completed (@Model.CompletedProjects Done)</td>
+                        <td class="py-3.5 px-4 text-right"><span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Live</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30 transition-all">
+                        <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center text-xs flex-shrink-0"><i class="fa-solid fa-square-check"></i></div>
+                            Tasks Tracking
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-400">Execution</td>
+                        <td class="py-3.5 px-4 font-semibold text-white">@Model.TotalTasks Tasks</td>
+                        <td class="py-3.5 px-4 text-violet-400 font-semibold">@taskRateStr% Completed (@Model.CompletedTasks Done)</td>
+                        <td class="py-3.5 px-4 text-right"><span class="px-2.5 py-1 rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/20 font-semibold">Live</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-800/30 transition-all">
+                        <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs flex-shrink-0"><i class="fa-solid fa-users"></i></div>
+                            Teams & Squads
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-400">Workforce</td>
+                        <td class="py-3.5 px-4 font-semibold text-white">@Model.TotalTeams Teams</td>
+                        <td class="py-3.5 px-4 text-amber-400 font-semibold">@Model.TotalTeamMembers Total Assigned Members</td>
+                        <td class="py-3.5 px-4 text-right"><span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">Live</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

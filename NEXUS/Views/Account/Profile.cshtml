@@ -1,0 +1,254 @@
+@model NEXUS.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "User Profile & Dashboard";
+    var userProject = ViewBag.UserProject as NEXUS.Models.Project;
+    var userDepartment = ViewBag.UserDepartment as NEXUS.Models.Department;
+    var userTeams = ViewBag.UserTeams as List<NEXUS.Models.Team> ?? new List<NEXUS.Models.Team>();
+    var userTasks = ViewBag.UserTasks as List<NEXUS.Models.TaskItem> ?? new List<NEXUS.Models.TaskItem>();
+    double userTaskRate = ViewBag.UserTaskRate ?? 0;
+    string firstLetter = !string.IsNullOrEmpty(Model.FullName) ? Model.FullName.Substring(0, 1).ToUpper() : (!string.IsNullOrEmpty(Model.UserName) ? Model.UserName.Substring(0, 1).ToUpper() : "U");
+}
+
+<div class="space-y-6 sm:space-y-8 max-w-7xl mx-auto pb-16">
+
+    <!-- Header Banner -->
+    <div class="bg-slate-900/70 p-5 sm:p-8 rounded-3xl border border-slate-800 backdrop-blur-2xl shadow-glass flex flex-col md:flex-row items-start md:items-center justify-between gap-5 sm:gap-6 relative overflow-hidden">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex items-center gap-4 sm:gap-6">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-500 to-sky-600 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shadow-[0_0_25px_rgba(59,130,246,0.4)] border border-blue-400/30 flex-shrink-0">
+                @firstLetter
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">@(Model.FullName ?? Model.UserName)</h1>
+                <p class="text-xs sm:text-sm text-blue-400 font-medium mt-0.5 sm:mt-1">Authorized System User & Developer</p>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 text-xs text-slate-400">
+                    <span class="truncate max-w-[200px] sm:max-w-none"><i class="fa-solid fa-envelope mr-1 text-blue-400"></i> @Model.Email</span>
+                    <span>•</span>
+                    <span><i class="fa-solid fa-shield-halved mr-1 text-emerald-400"></i> Active Status</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full md:w-auto flex items-center justify-between sm:justify-start gap-4 bg-slate-950/60 border border-slate-800 px-5 py-3.5 sm:py-4 rounded-2xl">
+            <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
+                @{
+                    string userTaskRateStr = userTaskRate.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+                }
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="text-blue-400 transition-all duration-1000 ease-out" stroke-dasharray="@userTaskRateStr, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="absolute text-[11px] font-bold text-white">@userTaskRateStr%</div>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-white block">Your Task Output</span>
+                <span class="text-[11px] text-slate-400">@ViewBag.CompletedUserTasks of @ViewBag.TotalUserTasks Tasks Completed</span>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl text-emerald-400 text-xs font-semibold flex items-center gap-2">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Personal Info & Form -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-slate-900/60 rounded-3xl border border-slate-800 backdrop-blur-xl p-6 shadow-glass space-y-6">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-user-pen text-blue-400"></i> Personal Information
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Update your credentials and account settings.</p>
+                </div>
+
+                <form asp-action="Profile" method="post" class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">About Me / Bio</label>
+                        <textarea name="aboutText" rows="3" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-all">Backend Software Engineer specializing in ASP.NET Core.</textarea>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Full Name</label>
+                        <input asp-for="FullName" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-all" />
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Email Address</label>
+                        <input asp-for="Email" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-all" />
+                    </div>
+
+                    <!-- Password with Show/Hide Toggle -->
+                    <div class="pt-3 border-t border-slate-800 space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400">Security Credentials</h3>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-slate-300">Current Password</label>
+                            <div class="relative">
+                                <input type="password" id="currPass" name="currentPassword" placeholder="••••••••" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 pr-10" />
+                                <button type="button" onclick="togglePassword('currPass', 'icon1')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                                    <i id="icon1" class="fa-solid fa-eye-slash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-semibold text-slate-300">New Password</label>
+                            <div class="relative">
+                                <input type="password" id="newPass" name="newPassword" placeholder="••••••••" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 pr-10" />
+                                <button type="button" onclick="togglePassword('newPass', 'icon2')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                                    <i id="icon2" class="fa-solid fa-eye-slash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full mt-4 bg-gradient-to-r from-blue-500 to-sky-600 hover:from-blue-400 hover:to-sky-500 text-white font-semibold py-2.5 rounded-xl text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Workspaces & Tasks Table -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-slate-900/60 rounded-3xl border border-slate-800 backdrop-blur-xl p-6 shadow-glass space-y-6">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-rectangle-list text-blue-400"></i> Assigned Workspaces, Projects & Tasks
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Overview of real departments, teams, and execution status for your account.</p>
+                </div>
+
+                <!-- الأقسام والتيمات الحقيقية من القاعدة -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
+                            <i class="fa-solid fa-building"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Department</span>
+                            <span class="text-sm font-bold text-white">
+                                @if (userDepartment != null)
+                                {
+                                    @userDepartment.Name
+                                }
+                                else if (userProject?.Department != null)
+                                {
+                                    @userProject.Department.Name
+                                }
+                                else
+                                {
+                                    <span class="text-slate-500 italic">No Department Assigned</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Active Teams</span>
+                            <span class="text-sm font-bold text-white">
+                                @if (userTeams.Any())
+                                {
+                                    @string.Join(", ", userTeams.Select(t => t.Name))
+                                }
+                                else if (userProject?.Team != null)
+                                {
+                                    @userProject.Team.Name
+                                }
+                                else
+                                {
+                                    <span class="text-slate-500 italic">Not Assigned to Any Team</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto pt-2">
+                    <table class="w-full text-left text-xs text-slate-300 min-w-[540px]">
+                        <thead class="bg-slate-950/60 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                            <tr>
+                                <th class="py-3 px-4 font-semibold">Task / Item Name</th>
+                                <th class="py-3 px-4 font-semibold">Project</th>
+                                <th class="py-3 px-4 font-semibold">Priority</th>
+                                <th class="py-3 px-4 font-semibold">Completion Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60">
+                            @if (userTasks.Any())
+                            {
+                                @foreach (var task in userTasks)
+                                {
+                                    bool isDone = task.Status == NEXUS.Enums.TaskStatus.Completed;
+                                    <tr class="hover:bg-slate-800/30 transition-all">
+                                        <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-lg @(isDone ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400") flex items-center justify-center text-[10px]">
+                                                <i class="fa-solid @(isDone ? "fa-check" : "fa-clock")"></i>
+                                            </div>
+                                            @task.Title
+                                        </td>
+                                        <td class="py-3.5 px-4 text-slate-400">@(userProject?.Name ?? "NEXUS Core Project")</td>
+                                        <td class="py-3.5 px-4">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300">@task.Priority</span>
+                                        </td>
+                                        <td class="py-3.5 px-4">
+                                            @if (isDone)
+                                            {
+                                                <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Completed (Done)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">In Progress</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-8 text-slate-500 italic bg-slate-950/30 rounded-xl">
+                                        No active tasks found assigned to your profile.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            }
+        }
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

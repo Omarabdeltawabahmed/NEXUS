@@ -1,0 +1,203 @@
+@model IEnumerable<NEXUS.Models.TaskItem>
+
+@{
+    ViewData["Title"] = "Tasks Management";
+    var isAdmin = User.IsInRole("Admin");
+    var viewAll = ViewBag.ViewAll ?? false;
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-500/20 text-violet-400 border border-violet-500/30 flex items-center justify-center text-sm shadow-neon-violet">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                Tasks Management
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">
+                @if (isAdmin)
+                {
+                    <span>Manage and monitor all system tasks.</span>
+                }
+                else if (viewAll)
+                {
+                    <span>Viewing all team members' tasks (Read-Only).</span>
+                }
+                else
+                {
+                    <span>Viewing your assigned tasks only.</span>
+                }
+            </p>
+        </div>
+
+        <!-- زرار التحكم: الأدمن ينشئ تاسك، اليوزر يبدل بين مهامه ومهام زمايله -->
+        <div>
+            @if (isAdmin)
+            {
+                <a asp-action="Create" class="bg-gradient-to-r from-cyan-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-neon-cyan flex items-center gap-2 transition-all w-fit">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Create New Task</span>
+                </a>
+            }
+            else
+            {
+                @if (viewAll)
+                {
+                    <a asp-action="Index" asp-route-viewAll="false" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-5 py-2.5 rounded-xl text-sm border border-slate-700/60 transition-all flex items-center gap-2 w-fit">
+                        <i class="fa-solid fa-user"></i>
+                        <span>My Tasks</span>
+                    </a>
+                }
+                else
+                {
+                    <a asp-action="Index" asp-route-viewAll="true" class="bg-gradient-to-r from-cyan-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-neon-cyan flex items-center gap-2 transition-all w-fit">
+                        <i class="fa-solid fa-globe"></i>
+                        <span>View All Tasks</span>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Tasks Table Card -->
+    <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl overflow-hidden shadow-glass">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider bg-slate-950/40">
+                        <th class="py-4 px-6 font-semibold">Task Title</th>
+                        <th class="py-4 px-6 font-semibold">Project</th>
+                        @if (isAdmin || viewAll)
+                        {
+                            <th class="py-4 px-6 font-semibold">Assigned To</th>
+                        }
+                        <th class="py-4 px-6 font-semibold">Due Date</th>
+                        <th class="py-4 px-6 font-semibold">Priority</th>
+                        <th class="py-4 px-6 font-semibold">Status</th>
+                        <th class="py-4 px-6 font-semibold text-center">Action</th>
+                        <th class="py-4 px-6 font-semibold text-center">Management</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-sm">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-12 text-slate-500">
+                                <i class="fa-solid fa-folder-open text-4xl mb-3 block text-slate-600"></i>
+                                No tasks found.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            string statusBg = item.Status.ToString() switch
+                            {
+                                "Pending" => "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                                "InProgress" => "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+                                "Completed" => "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                                _ => "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                            };
+
+                            string priorityBg = item.Priority.ToString() switch
+                            {
+                                "Urgent" => "bg-rose-500/10 text-rose-400 border-rose-500/30 shadow-sm shadow-rose-500/20 animate-pulse",
+                                "High" => "bg-red-500/10 text-red-400 border-red-500/20",
+                                "Medium" => "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                                "Low" => "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                                _ => "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                            };
+
+                            <tr class="hover:bg-slate-800/40 transition-all duration-200 group">
+                                <td class="py-4 px-6 font-semibold text-white group-hover:text-violet-400 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-violet-500/20 text-violet-400 border border-violet-500/30 flex items-center justify-center text-xs flex-shrink-0">
+                                            <i class="fa-solid fa-list-check"></i>
+                                        </div>
+                                        <span class="truncate">@Html.DisplayFor(modelItem => item.Title)</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        <i class="fa-solid fa-layer-group text-[10px]"></i>
+                                        @(item.Project?.Name ?? "Unassigned")
+                                    </span>
+                                </td>
+
+                                @if (isAdmin || viewAll)
+                                {
+                                    <td class="py-4 px-6 text-slate-300 text-xs font-medium">
+                                        @(item.AssignedToUser?.FullName ?? item.AssignedToUser?.Email ?? "Not Assigned")
+                                    </td>
+                                }
+
+                                <td class="py-4 px-6 text-slate-300 text-xs">
+                                    @item.DueDate.ToString("yyyy-MM-dd")
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="px-3 py-1 rounded-md text-xs font-medium border @priorityBg inline-block">
+                                        @item.Priority
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium border @statusBg inline-block">
+                                        @item.Status
+                                    </span>
+                                </td>
+
+                                <!-- عمود الـ Action -->
+                                <td class="py-4 px-6 text-center">
+                                    @if (item.Status == NEXUS.Enums.TaskStatus.Completed)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            <i class="fa-solid fa-check text-[10px]"></i> Done
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @if (isAdmin || item.AssignedToUserId == ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-action="StartTask" asp-route-id="@item.Id" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 text-xs font-semibold transition-all">
+                                                <i class="fa-solid fa-play text-[10px]"></i> Start
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs text-slate-500">In Progress</span>
+                                        }
+                                    }
+                                </td>
+
+                                <!-- عمود الـ Management (Details, Edit, Delete) -->
+                                <td class="py-4 px-6 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <!-- زر العرض Details متاح للجميع -->
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-violet-500/20 text-slate-300 hover:text-violet-400 border border-slate-700/60 hover:border-violet-500/30 flex items-center justify-center transition-all" title="Details">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </a>
+
+                                        @if (isAdmin)
+                                        {
+                                            <!-- زر التعديل Edit يظهر للـ Admin فقط -->
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-700/60 hover:border-amber-500/30 flex items-center justify-center transition-all" title="Edit">
+                                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                            </a>
+
+                                            <!-- زر الحذف Delete يظهر للـ Admin فقط -->
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/60 hover:border-red-500/30 flex items-center justify-center transition-all" title="Delete">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

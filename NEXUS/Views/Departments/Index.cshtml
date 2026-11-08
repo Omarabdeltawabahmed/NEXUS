@@ -1,0 +1,92 @@
+@model IEnumerable<NEXUS.Models.Department>
+
+@{
+    ViewData["Title"] = "Departments";
+}
+
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-sm shadow-sm">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                Departments Management
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">Manage organizational departments and track associated projects.</p>
+        </div>
+        <a asp-action="Create" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-neon-cyan flex items-center gap-2 transition-all w-fit">
+            <i class="fa-solid fa-plus"></i>
+            <span>New Department</span>
+        </a>
+    </div>
+
+    <!-- Departments Table/Grid Panel -->
+    <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800/80 shadow-glass">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[550px]">
+                <thead>
+                    <tr class="border-b border-slate-800/80 bg-slate-900/40 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <th class="py-4 px-6">Department Name</th>
+                        <th class="py-4 px-6">Description</th>
+                        <th class="py-4 px-6 text-center">Projects Count</th>
+                        <th class="py-4 px-6 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 text-sm">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-slate-800/30 transition-all group">
+                                <td class="py-4 px-6 font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <!-- تم توحيد تصميم المربع للأيقونة داخل الجدول ليطابق صفحة الـ Projects -->
+                                        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xs flex-shrink-0">
+                                            <i class="fa-solid fa-building"></i>
+                                        </div>
+                                        <span class="truncate">@item.Name</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-slate-300 max-w-xs truncate">
+                                    @(string.IsNullOrEmpty(item.Description) ? "No description provided." : item.Description)
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <span class="bg-cyan-500/20 text-cyan-300 text-xs px-2.5 py-1 rounded-full border border-cyan-500/30 font-semibold">
+                                        @(item.Projects?.Count ?? 0) Projects
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700/60 hover:border-cyan-500/30 flex items-center justify-center transition-all" title="Details">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </a>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-700/60 hover:border-amber-500/30 flex items-center justify-center transition-all" title="Edit">
+                                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/60 hover:border-red-500/30 flex items-center justify-center transition-all" title="Delete">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="py-12 text-center text-slate-500">
+                                <i class="fa-solid fa-folder-open text-3xl mb-3 block text-slate-600"></i>
+                                No departments found. Create your first department to get started.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

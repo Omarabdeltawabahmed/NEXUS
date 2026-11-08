@@ -1,0 +1,187 @@
+﻿@model NEXUS.Models.TaskItem
+
+@{
+    ViewData["Title"] = "Edit Task";
+}
+
+<div class="space-y-6 max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                Edit Task
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">Modify task information and current status.</p>
+        </div>
+        <a asp-action="Index" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-4 py-2 rounded-xl text-sm border border-slate-700/60 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to List</span>
+        </a>
+    </div>
+
+    <!-- Edit Form Card -->
+    <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-8 shadow-glass">
+        <form asp-action="Edit" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-red-400 text-xs mb-4"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div>
+                <label asp-for="Title" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-heading text-slate-500"></i> Task Title
+                </label>
+                <input asp-for="Title" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-all" />
+                <span asp-validation-for="Title" class="text-xs text-red-400 mt-1 block"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Project (Emerald Theme) -->
+                <div>
+                    <label asp-for="ProjectId" class="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group text-[10px]"></i> Project
+                    </label>
+                    <select asp-for="ProjectId" id="ProjectId" class="w-full bg-slate-950/60 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 transition-all" asp-items="ViewBag.ProjectId">
+                        <option value="">-- Select Project --</option>
+                    </select>
+                    <span asp-validation-for="ProjectId" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+
+                <!-- Task Type (Cyan Theme) -->
+                <div>
+                    <label asp-for="Type" class="block text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-tag text-[10px]"></i> Task Type
+                    </label>
+                    <select asp-for="Type" id="TaskType" class="w-full bg-slate-950/60 border border-cyan-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 transition-all" asp-items="ViewBag.Type"></select>
+                    <span asp-validation-for="Type" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+
+                <!-- Assigned To (Violet Theme) -->
+                <div>
+                    <label asp-for="AssignedToUserId" class="block text-xs font-semibold uppercase tracking-wider text-violet-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-user text-[10px]"></i> Assigned To
+                    </label>
+                    <select asp-for="AssignedToUserId" id="AssignedToUserId" class="w-full bg-slate-950/60 border border-violet-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition-all" asp-items="ViewBag.AssignedToUserId">
+                        <option value="">-- Select User --</option>
+                    </select>
+                    <span asp-validation-for="AssignedToUserId" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+            </div>
+
+            <!-- Dynamic Fields for Links based on Task Type -->
+            <div id="dynamic-links-container" class="space-y-4 pt-2">
+                <!-- Meeting Link Field -->
+                <div id="meeting-link-group" style="display: none;">
+                    <label asp-for="MeetingLink" class="block text-xs font-semibold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-video text-[10px]"></i> Meeting Link
+                    </label>
+                    <input asp-for="MeetingLink" placeholder="Enter meeting URL (e.g. Zoom, Teams, Meet)" class="w-full bg-slate-950/60 border border-amber-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-all" />
+                    <span asp-validation-for="MeetingLink" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+
+                <!-- API / Endpoint Link Field -->
+                <div id="api-link-group" style="display: none;">
+                    <label asp-for="ApiLink" class="block text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-code text-[10px]"></i> API / Testing Endpoint Link
+                    </label>
+                    <input asp-for="ApiLink" placeholder="Enter API endpoint or testing URL" class="w-full bg-slate-950/60 border border-cyan-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-cyan-500 transition-all" />
+                    <span asp-validation-for="ApiLink" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label asp-for="Priority" class="block text-xs font-semibold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-flag text-[10px]"></i> Priority
+                    </label>
+                    <select asp-for="Priority" class="w-full bg-slate-950/60 border border-amber-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-all" asp-items="Html.GetEnumSelectList<NEXUS.Enums.TaskPriority>()"></select>
+                    <span asp-validation-for="Priority" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Status" class="block text-xs font-semibold uppercase tracking-wider text-blue-400 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-spinner text-[10px]"></i> Status
+                    </label>
+                    <select asp-for="Status" class="w-full bg-slate-950/60 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 transition-all" asp-items="Html.GetEnumSelectList<NEXUS.Enums.TaskStatus>()"></select>
+                    <span asp-validation-for="Status" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+            </div>
+
+            <div>
+                <label asp-for="DueDate" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar text-slate-500"></i> Due Date
+                </label>
+                <input asp-for="DueDate" type="date" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-all" />
+                <span asp-validation-for="DueDate" class="text-xs text-red-400 mt-1 block"></span>
+            </div>
+
+            <div>
+                <label asp-for="Description" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-align-left text-slate-500"></i> Description
+                </label>
+                <textarea asp-for="Description" rows="4" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-all"></textarea>
+                <span asp-validation-for="Description" class="text-xs text-red-400 mt-1 block"></span>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-800/80">
+                <a asp-action="Index" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-all">Cancel</a>
+                <button type="submit" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // جلب المستخدمين حسب المشروع المختيار
+        document.getElementById('ProjectId').addEventListener('change', function() {
+            var projectId = this.value;
+            var assignedToSelect = document.getElementById('AssignedToUserId');
+
+            assignedToSelect.innerHTML = '<option value="">-- Select User --</option>';
+
+            if (projectId) {
+                fetch('/Tasks/GetUsersByProject?projectId=' + projectId)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(user => {
+                            var option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = user.name;
+                            assignedToSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching users:', error));
+            }
+        });
+
+        // التحكم في إظهار الحقول بناءً على Task Type
+        document.addEventListener("DOMContentLoaded", function() {
+            var taskTypeSelect = document.getElementById('TaskType');
+            var meetingGroup = document.getElementById('meeting-link-group');
+            var apiGroup = document.getElementById('api-link-group');
+
+            function handleTaskTypeChange() {
+                var selectedType = taskTypeSelect.value;
+
+                // إخفاء الكل افتراضياً
+                meetingGroup.style.display = 'none';
+                apiGroup.style.display = 'none';
+
+                // يمكنك تعديل أسماء الـ Enum هنا حسب قيم الـ TaskType المعرفة لديك (Meeting, Online, Testing, Api, etc.)
+                if (selectedType === 'Meeting' || selectedType === 'Online') {
+                    meetingGroup.style.display = 'block';
+                } else if (selectedType === 'Testing' || selectedType === 'ApiDevelopment' || selectedType === 'CodeSubmission') {
+                    // لو نوع التاسك Testing أو CodeSubmission يحتاج Api/Submission Link
+                    apiGroup.style.display = 'block';
+                }
+            }
+
+            if (taskTypeSelect) {
+                taskTypeSelect.addEventListener('change', handleTaskTypeChange);
+                handleTaskTypeChange(); // تنفيذها عند تحميل الصفحة لتثبيت الحالة القديمة للمهمة
+            }
+        });
+    </script>
+}

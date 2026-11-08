@@ -1,0 +1,228 @@
+@model NEXUS.ViewModels.DashboardViewModel
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<NEXUS.Models.ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var displayName = currentUser?.FullName ?? User.Identity?.Name ?? "User";
+}
+
+<div class="space-y-6 sm:space-y-8">
+
+    <!-- Welcome Banner -->
+    <div class="glass-panel rounded-2xl p-5 sm:p-8 relative overflow-hidden border border-cyan-500/20 shadow-glass">
+        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-widest mb-2">
+                <i class="fa-solid fa-bolt"></i> Welcome to NEXUS Core
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2 sm:mb-3">
+                Hello, <span class="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">@displayName</span>. Ready to synchronize?
+            </h1>
+            <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+                Managing neural workflows, tasks, and ASP.NET Core applications with maximum precision.
+            </p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+
+        <!-- Total Departments -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl border border-blue-500/20">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <span class="text-xs font-semibold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full">Online</span>
+            </div>
+            <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Departments</h3>
+            <div class="text-3xl font-extrabold text-white">@Model.TotalDepartments</div>
+        </div>
+
+        <!-- Active Projects -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center text-xl border border-violet-500/20">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <span class="text-xs font-semibold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full">Active</span>
+            </div>
+            <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Active Projects</h3>
+            <div class="text-3xl font-extrabold text-white">@Model.ActiveProjects</div>
+        </div>
+
+        <!-- Total Tasks -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl border border-cyan-500/20">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Live</span>
+            </div>
+            <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Total Tasks</h3>
+            <div class="text-3xl font-extrabold text-white">@Model.TotalTasks</div>
+        </div>
+
+        <!-- Productivity Index -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl border border-emerald-500/20">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">Optimal</span>
+            </div>
+            <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Productivity Index</h3>
+            <div class="text-3xl font-extrabold text-white">@Model.ProductivityIndex%</div>
+        </div>
+    </div>
+
+    <!-- Lower Section: Tasks & Distribution Widget -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Recent Tasks Table -->
+        <div class="lg:col-span-2 glass-panel rounded-2xl p-6 border border-slate-800/80">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Recent Neural Tasks</h3>
+                    <p class="text-xs text-slate-400">Latest active assignments across projects</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm min-w-[480px]">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider">
+                            <th class="py-3 px-4 font-semibold">Task Name</th>
+                            <th class="py-3 px-4 font-semibold">Project</th>
+                            <th class="py-3 px-4 font-semibold">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60">
+                        @if (Model.RecentTasks != null && Model.RecentTasks.Any())
+                        {
+                            @foreach (var task in Model.RecentTasks)
+                            {
+                                <tr class="hover:bg-slate-800/40 transition-colors">
+                                    <td class="py-3.5 px-4 font-medium text-white">@task.Title</td>
+                                    <td class="py-3.5 px-4 text-slate-300">@(task.Project != null ? task.Project.Name : "No Project")</td>
+                                    <td class="py-3.5 px-4">
+                                        @if (task.Status == NEXUS.Enums.TaskStatus.Completed)
+                                        {
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Completed</span>
+                                        }
+                                        else if (task.Status == NEXUS.Enums.TaskStatus.InProgress)
+                                        {
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">In Progress</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">To Do</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="py-6 text-center text-slate-500 text-sm">No recent tasks found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Task Distribution Widget -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800/80 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-white tracking-wide">Task Distribution</h3>
+                    <span class="text-xs text-slate-400">By Status</span>
+                </div>
+
+                <!-- Doughnut Chart with Center Total -->
+                <div class="relative w-full h-48 flex items-center justify-center mb-4">
+                    <canvas id="taskDistributionChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-2xl font-extrabold text-white" id="centerTotalCount">@Model.TotalTasks</span>
+                        <span class="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">TOTAL</span>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex items-center justify-center gap-4 mb-4 text-xs font-medium">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                        <span class="text-slate-300">To Do</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <span class="text-slate-300">In Progress</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span class="text-slate-300">Completed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom 3 Metric Cards -->
+            <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-800/80">
+                <div class="bg-[#0b101d] border border-slate-800/80 rounded-xl p-2.5 text-center">
+                    <span class="block text-blue-400 text-sm font-extrabold mb-0.5">@Model.TasksToDo</span>
+                    <span class="text-[9px] font-semibold tracking-wider text-slate-400 uppercase">TO DO</span>
+                </div>
+                <div class="bg-[#0b101d] border border-slate-800/80 rounded-xl p-2.5 text-center">
+                    <span class="block text-amber-400 text-sm font-extrabold mb-0.5">@Model.TasksInProgress</span>
+                    <span class="text-[9px] font-semibold tracking-wider text-slate-400 uppercase">IN PROGRESS</span>
+                </div>
+                <div class="bg-[#0b101d] border border-slate-800/80 rounded-xl p-2.5 text-center">
+                    <span class="block text-emerald-400 text-sm font-extrabold mb-0.5">@Model.TasksCompletedCount</span>
+                    <span class="text-[9px] font-semibold tracking-wider text-slate-400 uppercase">COMPLETED</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById('taskDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['To Do', 'In Progress', 'Completed'],
+                    datasets: [{
+                        data: [@Model.TasksToDo, @Model.TasksInProgress, @Model.TasksCompletedCount],
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+                        borderWidth: 0,
+                        cutout: '72%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#121929',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#cbd5e1',
+                            borderColor: '#1e293b',
+                            borderWidth: 1,
+                            padding: 10
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

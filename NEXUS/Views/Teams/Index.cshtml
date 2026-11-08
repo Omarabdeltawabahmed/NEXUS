@@ -1,0 +1,63 @@
+@model IEnumerable<NEXUS.Models.Team>
+
+@{
+    ViewData["Title"] = "Teams";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.2)] flex-shrink-0">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <span>Teams Management</span>
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">Manage corporate teams and assign members efficiently.</p>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all flex items-center gap-2 w-fit">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Create New Team</span>
+            </a>
+        }
+    </div>
+
+    <!-- Teams Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        @foreach (var item in Model)
+        {
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 backdrop-blur-xl p-5 sm:p-6 shadow-glass flex flex-col justify-between space-y-4 hover:border-slate-700 transition-all">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-bold text-white">@item.Name</h3>
+                        <span class="text-xs px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">
+                            @item.Users.Count() Members
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 line-clamp-2">@(string.IsNullOrEmpty(item.Description) ? "No description provided." : item.Description)</p>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500">Projects: @item.Projects.Count()</span>
+                    <div class="flex items-center gap-2">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700/60 hover:border-cyan-500/30 flex items-center justify-center transition-all" title="Details">
+                            <i class="fa-solid fa-eye text-xs"></i>
+                        </a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-700/60 hover:border-amber-500/30 flex items-center justify-center transition-all" title="Edit">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 border border-slate-700/60 hover:border-red-500/30 flex items-center justify-center transition-all" title="Delete">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
